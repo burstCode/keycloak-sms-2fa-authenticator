@@ -11,7 +11,7 @@ import org.keycloak.provider.ProviderConfigProperty;
 import java.util.List;
 
 public class SmsAuthenticatorFactory implements AuthenticatorFactory {
-    public static final String PROVIDER_ID = "sms-otp";
+    public static final String PROVIDER_ID = "sms-authenticator";
 
     private static final SmsAuthenticator SINGLETON = new SmsAuthenticator();
 
@@ -75,7 +75,7 @@ public class SmsAuthenticatorFactory implements AuthenticatorFactory {
                 ),
                 new ProviderConfigProperty(
                         "codeTimeToLive",
-                        "TTL кода",
+                        "Code TTL",
                         "Code lifetime (validity) in seconds",
                         ProviderConfigProperty.STRING_TYPE,
                         "300"
