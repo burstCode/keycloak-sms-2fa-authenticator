@@ -83,7 +83,7 @@ public class SmsAuthenticatorFactory implements AuthenticatorFactory {
                 codeLengthProperty,
                 new ProviderConfigProperty(
                         "phoneNumberAttribute",
-                        "Название аттрибута для номера телефона",
+                        "Attribute name for the phone number",
                         "It is important that it matches <User>->Attributes->Key," +
                                 " where the phone number is stored",
                         ProviderConfigProperty.STRING_TYPE,
