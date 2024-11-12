@@ -10,7 +10,9 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -146,11 +148,11 @@ public class SmsAuthenticator implements Authenticator {
 
         // Проверка данных СМСЦентра в конфиге
         if (login == null || login.isEmpty()) {
-            logger.severe("SMSC login is missing in the configuration.");
+            logger.log(Level.WARNING, "SMSC login is missing in the configuration.");
             configMissed = true;
         }
         if (password == null || password.isEmpty()) {
-            logger.severe("SMSC password is missing in the configuration");
+            logger.log(Level.WARNING,"SMSC password is missing in the configuration");
             configMissed = true;
         }
 
@@ -180,11 +182,21 @@ public class SmsAuthenticator implements Authenticator {
             connection.setRequestMethod("GET");
             int responseCode = connection.getResponseCode();
 
-            logger.log(Level.INFO, "Attempting to access the SMSC via the link: " + urlString);
+            // Читаем ответ от сервера
+            StringBuilder response = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+            }
 
-            if (responseCode != HttpURLConnection.HTTP_OK) {
+            // Проверка кода ответа и содержимого
+            if (responseCode != HttpURLConnection.HTTP_OK ||
+                    response.toString().contains("ERROR = 2 (authorise error)")) {
                 logger.log(Level.WARNING,
-                        "Error sending SMS to a number " + phoneNumber + ", response code: " + responseCode);
+                        "Error sending SMS to number " + phoneNumber + ". Response code: " + responseCode +
+                                ", Response message: " + response);
             } else {
                 String lastTwoDigitsOfCode = code.substring(code.length() - 2);
 
@@ -196,14 +208,11 @@ public class SmsAuthenticator implements Authenticator {
                 String formattedCodeOutput = dashes + lastTwoDigitsOfCode; // Форматируем вывод
 
                 logger.log(Level.INFO,
-                        "SMS successfully sent to the number: " + phoneNumber +
+                        "SMS successfully sent to number: " + phoneNumber +
                                 ", last 2 digits of the confirmation code: " + formattedCodeOutput);
-
-
             }
-
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error when sending SMS to a number: " + phoneNumber, e);
+    } catch (IOException e) {
+            logger.log(Level.SEVERE, "Exception occurred while sending SMS to a number: " + phoneNumber, e);
         }
     }
 }
